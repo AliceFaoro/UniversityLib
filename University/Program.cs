@@ -1,6 +1,4 @@
-﻿using University.DataModel;
-using University.BLogic;
-using University.AppMenu;
+﻿using University.AppMenu;
 
 namespace University
 {
