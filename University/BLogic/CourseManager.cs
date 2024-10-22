@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
-using System.Security.Cryptography;
 using University.DataModel;
 
 namespace University.BLogic
@@ -12,6 +11,7 @@ namespace University.BLogic
         private SqlCommand _command = new();
 
         public static List<Course> coursesList = new();
+        //Importa i dati iniziali dei corsi dal database
 
         public List<Course> GetCourses()
         {
@@ -22,7 +22,7 @@ namespace University.BLogic
                 sqlCnn.Open();
                 using SqlCommand sqlCmd = new("SELECT * FROM COURSE", sqlCnn);
                 using SqlDataReader dataReader = sqlCmd.ExecuteReader();
-
+                //Per ogni corso presente nel database creo un oggetto Course e lo aggiungo alla lista
                 while (dataReader.Read())
                 {
                     coursesList.Add(new Course
@@ -43,17 +43,16 @@ namespace University.BLogic
 
             return coursesList;
         }
+        //Importa i dati mancanti dei corsi dal database
         public void GetCourses2()
         {
             try
             {
-
-
                 _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
 
-                //Recupero lista Corsi
+                //Recupero lista di esami associati ad ogni corso 
                 foreach (Course course in coursesList)
                 {
                     int id = course.Id;
@@ -72,6 +71,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Aggiunge un nuovo corso nel database e nella lista
         public void AddCourse()
         {
             try
@@ -113,6 +113,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Aggiorna i dati di un corso sia nel database che nella lista
         public void UpdateCourse()
         {
             try
@@ -144,6 +145,7 @@ namespace University.BLogic
             }
 
         }
+        //Visualizza a console la lista dei corsi
 
         public void ViewCourse()
         {

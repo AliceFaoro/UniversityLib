@@ -10,7 +10,7 @@ namespace University.BLogic
         private SqlCommand _command = new();
 
         public static List<Professor> professorList = new();
-
+        //Importa dati iniziali dal database
         public List<Professor> GetProfessors()
         {
             try
@@ -21,6 +21,7 @@ namespace University.BLogic
                 using SqlCommand sqlCmd = new("SELECT * FROM PROFESSOR", sqlCnn);
                 using SqlDataReader dataReader = sqlCmd.ExecuteReader();
 
+                //Per ogni professore presente nel database creo un oggetto professore e lo aggiungo alla lista
                 while (dataReader.Read())
                 {
                     professorList.Add(new Professor
@@ -39,6 +40,7 @@ namespace University.BLogic
             }
             return professorList;
         }
+        //Importa dati mancanti dal database
         public void GetProfessors2()
         {
             try
@@ -47,7 +49,8 @@ namespace University.BLogic
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
 
-                //Recupero lista Professori
+                //Aggiungo la lista dei corsi tenuti da ogni professore
+                //Dalla tabella nel database Course selezioni tutti i corsi che hanno il ProfessorId uguale all'id del professore nella lista 
                 foreach (Professor prof in professorList)
                 {
                     int id = prof.Id;
@@ -67,6 +70,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Aggiungo professore nel database e nella lista
         public void AddProfessor()
         {
             Console.Clear();
@@ -112,6 +116,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Modifico un professore sia nel database che nella lista
         public void UpdateProfessor()
         {
             _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
@@ -174,6 +179,7 @@ namespace University.BLogic
 
             }
         }
+        //Visualizza a console la lista di tutti i professori presenti nella lista
         public void ViewProfessor()
         {
             Console.Clear();

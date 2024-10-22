@@ -12,7 +12,6 @@ namespace University.AppMenu
     {
         public static void Show()
         {
-            UniManager uniManager = new();
             FacultyManager fManager = new();
             StudentManager sManager = new();
             ProfessorManager pManager = new();

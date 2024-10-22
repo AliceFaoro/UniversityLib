@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
-using System.Linq.Expressions;
 using University.DataModel;
 
 
@@ -12,7 +11,7 @@ namespace University.BLogic
         private SqlCommand _command = new();
         
         public static List<Faculty> facultyList = new();
-
+        //Importa dal database i dati iniziali delle facoltà
         public List<Faculty> GetFaculties()
         {
 
@@ -24,6 +23,7 @@ namespace University.BLogic
                 using SqlCommand sqlCmd = new("SELECT * FROM FACULTY", sqlCnn);
                 using SqlDataReader dataReader = sqlCmd.ExecuteReader();
                 Console.Clear();
+                //Per ogni facoltà selezionata dal database creo un oggetto Faculty e lo aggiungo alla lista di facoltà
                 while (dataReader.Read())
                 {
 
@@ -43,7 +43,7 @@ namespace University.BLogic
             }
             return facultyList;
         }
-        
+        //Importa dal database i dati mancanti delle facoltà
         public void GetFaculties2()
         {
             try
@@ -56,7 +56,7 @@ namespace University.BLogic
                 {
                     int id = facolta.Id;
                     
-                    //Recupero corsi facoltà
+                    //Recupero i corsi di ogni facoltà e li aggiungo alla lista CoursesFaculty
                     using SqlCommand sqlCmd = new("SELECT Id FROM Course WHERE FacultyId = @id", sqlCnn);
                     sqlCmd.Parameters.AddWithValue("@id", id);
                     using SqlDataReader dataReader = sqlCmd.ExecuteReader();
@@ -67,7 +67,7 @@ namespace University.BLogic
                     }
                     dataReader.Close();
 
-                    //Recupero Professori Facoltà
+                    //Recupero i professori di ogni facoltà e li aggiungo alla lista ProfessorsFaculty
                     using SqlConnection sqlCnn1 = new(_connection.ConnectionString);
                     sqlCnn1.Open();
                     using SqlCommand sqlCmd1 = new("SELECT Id FROM Professor WHERE FacultyId = @id", sqlCnn1);
@@ -80,7 +80,7 @@ namespace University.BLogic
                     }
                     dataReader1.Close();
 
-                    //Recupero Esami Facoltà
+                    //Recupero gli esami di ogni facoltà e li aggiungo alla lista ExamsFaculty
                     using SqlConnection sqlCnn2 = new(_connection.ConnectionString);
                     sqlCnn2.Open();
                     using SqlCommand sqlCmd2 = new("Select Id FROM Exam WHERE FacultyId = @id", sqlCnn2);
@@ -101,6 +101,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);  
             }
         }
+        //Aggiunge una nuova facoltà nel database e nella lista
         public void AddFaculty()
         {
             Console.Clear();
@@ -127,7 +128,7 @@ namespace University.BLogic
                     Id = id,
                     NameFaculty = name
                 };
-                FacultyManager.facultyList.Add(f);
+                facultyList.Add(f);
             }
             catch (Exception ex)
             {
@@ -135,6 +136,7 @@ namespace University.BLogic
             }
 
         }
+        //Aggiorna i dati di una facoltà nel database e nella lista
         public void UpdateFaculty()
         {
             Console.Clear();
@@ -162,24 +164,25 @@ namespace University.BLogic
             }
 
         }
+        //Visualizza a console la lista delle facoltà
         public void ViewFaculties()
         {
             Console.Clear();
             Console.WriteLine("Elenco Facoltà: \n");
             foreach (Faculty f in FacultyManager.facultyList)
             {
-                Console.Write($"Nome facoltà: {f.NameFaculty}, ");
+                Console.WriteLine($"Nome facoltà: {f.NameFaculty}");
                 foreach (Course c in f.CoursesFaculty)
                 {
-                    Console.Write($"Nome Corso: {c.CourseName}, ");
+                    Console.WriteLine($"Nome Corso: {c.CourseName}");
                 }
                 foreach (Exam e in f.ExamsFaculty)
                 {
-                    Console.Write($" Id Esame: {e.Course.CourseName}");
+                    Console.WriteLine($"Id Esame: {e.Id}");
                 }
                 foreach (Professor p in f.ProfessorsFaculty)
                 {
-                    Console.Write($" Professore: {p.FullName}\n\n");
+                    Console.WriteLine($"Professore: {p.FullName}\n");
                 }
             }
         }

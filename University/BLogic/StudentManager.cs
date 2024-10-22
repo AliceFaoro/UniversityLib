@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
-using System.Linq.Expressions;
 using University.DataModel;
 
 namespace University.BLogic
@@ -11,7 +10,7 @@ namespace University.BLogic
         private SqlCommand _command = new();
 
         public static List<Student> studentList = new();
-
+        //Importa i primi dati dal database
         public List<Student> GetStudents()
         {
             try
@@ -24,6 +23,7 @@ namespace University.BLogic
 
                 while (dataReader.Read())
                 {
+                    //per ogni studente nel database crea l'oggetto studente e lo aggiunge alla lista
                     studentList.Add(new Student
                     {
                         Id = int.Parse(dataReader["Id"].ToString()),
@@ -42,6 +42,7 @@ namespace University.BLogic
 
             return studentList;
         }
+        //Importa i dati mancanti dal database
         public void GetStudents2()
         {
             try
@@ -50,11 +51,12 @@ namespace University.BLogic
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
 
+                //Per ogni studente nella lista aggiungo i dati mancanti
                 foreach (Student student in studentList)
                 {
                     int id = student.Id;
 
-                    //Recupero corsi studente
+                    //Recupero corsi studente e popolo la lista StudentsCourses
                     using SqlCommand sqlCmd = new("SELECT CourseId FROM Student_Course WHERE StudentId = @id", sqlCnn);
                     sqlCmd.Parameters.AddWithValue("@id", id);
                     using SqlDataReader dataReader = sqlCmd.ExecuteReader();
@@ -65,7 +67,7 @@ namespace University.BLogic
                     }
                     dataReader.Close();
 
-                    //Recupero esami studente
+                    //Recupero esami studente e popolo la lista StudentsExams
                     using SqlCommand sqlCmd1 = new("SELECT ExamId FROM Student_Exam WHERE StudentId = @id", sqlCnn);
                     sqlCmd1.Parameters.AddWithValue("@id", id);
                     using SqlDataReader dataReader1 = sqlCmd1.ExecuteReader();
@@ -82,6 +84,7 @@ namespace University.BLogic
 
             }
         }
+        //Aggiunge un nuovo studente al database e sulla lista
         public void AddStudent()
         {
             Console.Clear();
@@ -130,6 +133,7 @@ namespace University.BLogic
             };
             studentList.Add(s);
         }
+        //Aggiorna studente sul database e nella lista
         public void UpdateStudent()
         {
             try
@@ -147,6 +151,7 @@ namespace University.BLogic
 
                 switch (scelta)
                 {
+                    //Aggiorna facoltà dello studente
                     case 1:
 
                         Console.WriteLine("Inserire il nome della nuova facoltà:");
@@ -164,6 +169,8 @@ namespace University.BLogic
                             sqlCmd.ExecuteNonQuery();
                         }
                         break;
+
+                    //Aggiorna la retta dello studente
                     case 2:
 
                         Console.WriteLine("Inserire la nuova retta: ");
@@ -180,6 +187,8 @@ namespace University.BLogic
                         }
 
                         break;
+
+                    //Aggiorna la media dello studente
                     case 3:
                         Console.WriteLine("Inserire la nuova media: ");
                         decimal avg = decimal.Parse(Console.ReadLine());
@@ -203,7 +212,7 @@ namespace University.BLogic
             }
 
         }
-
+        //Stampa a console la lista di tutti gli studenti
         public void ViewStudents()
         {
             Console.Clear();

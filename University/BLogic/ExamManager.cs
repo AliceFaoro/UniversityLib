@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
-using System.Security.Cryptography;
 using University.DataModel;
 
 namespace University.BLogic
@@ -11,6 +10,7 @@ namespace University.BLogic
         private SqlCommand _command = new();
 
         public static List<Exam> examsList = new();
+        //Importa esami dal database
         public List<Exam> GetExams()
         {
             try
@@ -20,7 +20,7 @@ namespace University.BLogic
                 sqlCnn.Open();
                 using SqlCommand sqlCmd = new("SELECT * FROM EXAM", sqlCnn);
                 using SqlDataReader dataReader = sqlCmd.ExecuteReader();
-
+                //Per ogni esame nel database creo un oggetto Exam e lo aggiungo alla lista
                 while (dataReader.Read())
                 {
                     examsList.Add(new Exam
@@ -42,6 +42,7 @@ namespace University.BLogic
 
             return examsList;
         }
+        //Aggiunge un esame nel database e nella lista
         public void AddExam()
         {
             try
@@ -86,6 +87,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Aggiorna i dati di un esame sia nel database che nella lista
         public void UpdateExam()
         {
             try
@@ -103,6 +105,7 @@ namespace University.BLogic
 
                 switch (scelta)
                 {
+                    //Aggiorna Professore dell'esame
                     case 1:
 
                         Console.WriteLine("Inserire il nome del nuovo professore:");
@@ -119,6 +122,8 @@ namespace University.BLogic
                         }
 
                         break;
+
+                    //Aggiorna la data dell'esame
                     case 2:
 
                         Console.WriteLine("Inserire la nuova data ");
@@ -140,6 +145,7 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        //Visualizza a console la lista degli esami
         public void ViewExam()
         {
             Console.Clear();
