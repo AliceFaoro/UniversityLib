@@ -11,6 +11,6 @@ namespace University.DataModel
         public DateTime DateOfBirth { get; set; }
         public Faculty Faculty { get; set; }
         public decimal Pay { get; set; }
-        public List<Exam> ProfessorExams = new();
+        public List<Course> ProfessorsCourses { get; set; } = new();
     }
 }

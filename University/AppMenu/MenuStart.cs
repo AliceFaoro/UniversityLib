@@ -1,4 +1,9 @@
-﻿using University.BLogic;
+﻿using Microsoft.Data.SqlClient;
+using System.Configuration;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using University.BLogic;
+using University.DataModel;
 
 namespace University.AppMenu
 {
@@ -30,6 +35,7 @@ namespace University.AppMenu
 
         private static void CreateMenu(FacultyManager f, StudentManager sM, ProfessorManager pM, CourseManager cM, ExamManager eM)
         {
+
             Console.WriteLine("BENVENUTO!\n");
             Console.WriteLine("Menù:\n1. Importare Dati dal Database\n2. Aggiungi\n3. Modifica\n4. Cancella\n5. Visualizza elenco");
             Console.WriteLine("\nEffettua una scelta da 1 a 5: ");
@@ -44,6 +50,12 @@ namespace University.AppMenu
                         pM.GetProfessors();
                         cM.GetCourses();
                         eM.GetExams();
+                        f.GetFaculties2();
+                        sM.GetStudents2();
+                        pM.GetProfessors2();
+                        cM.GetCourses2();
+
+
                         Console.WriteLine("\n\nDati importati con successo!\n");
                     }
                     catch (Exception e)
@@ -85,31 +97,21 @@ namespace University.AppMenu
                             f.UpdateFaculty();
                             break;
                         case 2:
+                            sM.UpdateStudent();
                             break;
                         case 3:
+                            pM.UpdateProfessor();
                             break;
                         case 4:
+                            cM.UpdateCourse();
                             break;
                         case 5:
+                            eM.UpdateExam();
                             break;
                     }
                     break;
                 case 4:
-                    Console.WriteLine("Chi desideri cancellare? 1.Facoltà 2.Studente 3.Professore 4.Corso 5.Esame");
-                    s = int.Parse(Console.ReadLine());
-                    switch (s)
-                    {
-                        case 1:
-                            break;
-                        case 2:
-                            break;
-                        case 3:
-                            break;
-                        case 4:
-                            break;
-                        case 5:
-                            break;
-                    }
+                    
                     break;
                 case 5:
                     Console.WriteLine("\nChi desideri visualizzare? 1.Facoltà 2.Studente 3.Professore 4.Corso 5.Esame");

@@ -1,26 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using University.DataModel;
-
-namespace University.BLogic
+﻿namespace University.BLogic
 {
     public class UniManager
     {
-        List<Course> coursesList = new();
-        List<Exam> examsList = new();
-        List<Faculty> facultyList = new();
-        List<Professor> professorList = new();
-        List<Student> studentList = new();
-
-
-        public void ImportFromDb()
-        {
-
-        }
+         
 
         //public void ImportFiles()
         //{

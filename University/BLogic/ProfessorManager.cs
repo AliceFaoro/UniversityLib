@@ -33,21 +33,45 @@ namespace University.BLogic
                     });
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                Console.WriteLine(ex.Message);
             }
-            Console.WriteLine($"{professorList[0].FullName}, {professorList[0].DateOfBirth}, {professorList[0].Faculty.NameFaculty} ,{professorList[0].Pay}");
             return professorList;
+        }
+        public void GetProfessors2()
+        {
+            try
+            {
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
+
+                //Recupero lista Professori
+                foreach (Professor prof in professorList)
+                {
+                    int id = prof.Id;
+                    using SqlCommand sqlCmd = new("SELECT Id FROM Course WHERE ProfessorId = @id", sqlCnn);
+                    sqlCmd.Parameters.AddWithValue("@id", id);
+                    using SqlDataReader dataReader = sqlCmd.ExecuteReader();
+                    while (dataReader.Read())
+                    {
+                        Course c = CourseManager.coursesList.Find(c => c.Id == int.Parse(dataReader["Id"].ToString()));
+                        prof.ProfessorsCourses.Add(c);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         public void AddProfessor()
         {
             Console.Clear();
             try
             {
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-
                 Console.WriteLine("Inserire Id: ");
                 int id = int.Parse(Console.ReadLine());
                 Console.WriteLine("Inserire Nome completo: ");
@@ -59,6 +83,7 @@ namespace University.BLogic
                 Console.WriteLine("Inserire Stipendio: ");
                 decimal pay = decimal.Parse(Console.ReadLine());
 
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
                 using SqlCommand sqlCmd = new("INSERT INTO PROFESSOR" +
@@ -87,13 +112,79 @@ namespace University.BLogic
                 Console.WriteLine(ex.Message);
             }
         }
+        public void UpdateProfessor()
+        {
+            _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+            using SqlConnection sqlCnn = new(_connection.ConnectionString);
+            sqlCnn.Open();
+
+            Console.Clear();
+            Console.WriteLine("Inserire il nome del professore da aggiornare: ");
+            string nome = Console.ReadLine();
+            Professor p = professorList.Find(p => p.FullName.Equals(nome));
+            Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Stipendio");
+            int scelta = int.Parse(Console.ReadLine());
+
+            switch (scelta)
+            {
+                case 1:
+
+                    Console.WriteLine("Inserire il nome della nuova facoltà:");
+                    string fName = Console.ReadLine();
+                    Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
+                    p.Faculty = f;
+                    int fId = f.Id;
+
+                    try
+                    {
+                        using SqlCommand sqlCmd = new("UPDATE Professor " +
+                                                       "SET FacultyId = @fId " +
+                                                       "WHERE FullName = @nome", sqlCnn);
+                        sqlCmd.Parameters.AddWithValue("@fId", fId);
+                        sqlCmd.Parameters.AddWithValue("@nome", nome);
+                        sqlCmd.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+
+                    break;
+                case 2:
+
+                    Console.WriteLine("Inserire il nuovo stipendio ");
+                    decimal pay = decimal.Parse(Console.ReadLine());
+                    p.Pay = pay;
+
+                    try
+                    {
+                        using SqlCommand sqlCmd = new("UPDATE Professor " +
+                                                       "SET Pay = @pay " +
+                                                       "WHERE FullName = @nome", sqlCnn);
+                        sqlCmd.Parameters.AddWithValue("@pay", pay);
+                        sqlCmd.Parameters.AddWithValue("@nome", nome);
+                        sqlCmd.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+
+                    break;
+
+            }
+        }
         public void ViewProfessor()
         {
             Console.Clear();
             Console.WriteLine("Elenco Professori: \n");
             foreach (Professor p in professorList)
             {
-                Console.WriteLine($"Nome: {p.FullName}\nData di nascita: {p.DateOfBirth}\nFacoltà: {p.Faculty.NameFaculty}\nStipendio: {p.Pay}\n");
+                Console.WriteLine($"Nome: {p.FullName}\nData di nascita: {p.DateOfBirth}\nFacoltà: {p.Faculty.NameFaculty}\nStipendio: {p.Pay}");
+                foreach (Course c in p.ProfessorsCourses)
+                {
+                    Console.Write($"Corso: {c.CourseName}\n\n");
+                }
             }
 
         }

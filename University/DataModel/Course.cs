@@ -10,6 +10,6 @@ namespace University.DataModel
         public string CourseName { get; set; }
         public Faculty Faculty { get; set; }
         public Professor CourseProfessor { get; set; }
-        public List<Exam> CourseExams { get; set; }
+        public List<Exam> CourseExams { get; set; } = new();
     }
 }

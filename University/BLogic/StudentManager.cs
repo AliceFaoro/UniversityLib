@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
+using System.Linq.Expressions;
 using University.DataModel;
 
 namespace University.BLogic
@@ -34,13 +35,52 @@ namespace University.BLogic
                     });
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Errore studente");
-                throw;
+                Console.WriteLine(ex.Message);
             }
-            Console.WriteLine($"{studentList[0].FullName}, {studentList[0].DateOfBirth}, {studentList[0].Faculty.NameFaculty} ,{studentList[0].Tuition}, {studentList[0].AvgGrades}");
+
             return studentList;
+        }
+        public void GetStudents2()
+        {
+            try
+            {
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
+
+                foreach (Student student in studentList)
+                {
+                    int id = student.Id;
+
+                    //Recupero corsi studente
+                    using SqlCommand sqlCmd = new("SELECT CourseId FROM Student_Course WHERE StudentId = @id", sqlCnn);
+                    sqlCmd.Parameters.AddWithValue("@id", id);
+                    using SqlDataReader dataReader = sqlCmd.ExecuteReader();
+                    while (dataReader.Read())
+                    {
+                        Course c = CourseManager.coursesList.Find(c => c.Id == int.Parse(dataReader["CourseId"].ToString()));
+                        student.StudentsCourses.Add(c);
+                    }
+                    dataReader.Close();
+
+                    //Recupero esami studente
+                    using SqlCommand sqlCmd1 = new("SELECT ExamId FROM Student_Exam WHERE StudentId = @id", sqlCnn);
+                    sqlCmd1.Parameters.AddWithValue("@id", id);
+                    using SqlDataReader dataReader1 = sqlCmd1.ExecuteReader();
+                    while (dataReader1.Read())
+                    {
+                        Exam e = ExamManager.examsList.Find(e => e.Id == int.Parse(dataReader1["ExamId"].ToString()));
+                        student.StudentsExams.Add(e);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
         public void AddStudent()
         {
@@ -76,6 +116,7 @@ namespace University.BLogic
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
             }
 
             Student s = new Student
@@ -91,96 +132,98 @@ namespace University.BLogic
         }
         public void UpdateStudent()
         {
-            _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-            Console.Clear();
-            Console.WriteLine("Inserire il nome dello studente da aggiornare: ");
-            string nome = Console.ReadLine();
-            Student s = studentList.Find(s => s.FullName.Equals(nome));
-            Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Retta 3.Media");
-            int scelta = int.Parse(Console.ReadLine());
-
-            switch (scelta)
+            try
             {
-                case 1:
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
 
-                    Console.WriteLine("Inserire il nome della nuova facoltà:");
-                    string fName = Console.ReadLine();
-                    Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
-                    s.Faculty = f;
-                    int fId = f.Id;
+                Console.Clear();
+                Console.WriteLine("Inserire il nome dello studente da aggiornare: ");
+                string nome = Console.ReadLine();
+                Student s = studentList.Find(s => s.FullName.Equals(nome));
+                Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Retta 3.Media");
+                int scelta = int.Parse(Console.ReadLine());
 
-                    try
-                    {
-                        using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                        sqlCnn.Open();
-                        using SqlCommand sqlCmd = new("UPDATE Student " +
+                switch (scelta)
+                {
+                    case 1:
+
+                        Console.WriteLine("Inserire il nome della nuova facoltà:");
+                        string fName = Console.ReadLine();
+                        Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
+                        s.Faculty = f;
+                        int fId = f.Id;
+
+                        using (SqlCommand sqlCmd = new("UPDATE Student " +
                                                        "SET FacultyId = @fId " +
-                                                       "WHERE NameFaculty = @fName", sqlCnn);
-                        sqlCmd.Parameters.AddWithValue("@fId", fId);
-                        sqlCmd.Parameters.AddWithValue("@fName", fName);
-                        sqlCmd.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                                                       "WHERE FullName = @nome", sqlCnn))
+                        {
+                            sqlCmd.Parameters.AddWithValue("@fId", fId);
+                            sqlCmd.Parameters.AddWithValue("@nome", nome);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+                        break;
+                    case 2:
 
-                    break;
-                case 2:
+                        Console.WriteLine("Inserire la nuova retta: ");
+                        decimal retta = decimal.Parse(Console.ReadLine());
+                        s.Tuition = retta;
 
-                    Console.WriteLine("Inserire la nuova retta: ");
-                    decimal retta = decimal.Parse(Console.ReadLine());
-                    s.Tuition = retta;
-
-                    try
-                    {
-                        using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                        sqlCnn.Open();
-                        using SqlCommand sqlCmd = new("UPDATE Student " +
+                        using (SqlCommand sqlCmd = new("UPDATE Student " +
                                                        "SET Tuition = @retta " +
-                                                       "WHERE NameFaculty = @nome", sqlCnn);
-                        sqlCmd.Parameters.AddWithValue("@reta", retta);
-                        sqlCmd.Parameters.AddWithValue("@nome", nome);
-                        sqlCmd.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                                                       "WHERE FullName = @nome", sqlCnn))
+                        {
+                            sqlCmd.Parameters.AddWithValue("@retta", retta);
+                            sqlCmd.Parameters.AddWithValue("@nome", nome);
+                            sqlCmd.ExecuteNonQuery();
+                        }
 
-                    break;
-                case 3:
-                    Console.WriteLine("Inserire la nuova media: ");
-                    decimal avg = decimal.Parse(Console.ReadLine());
-                    s.AvgGrades = avg;
+                        break;
+                    case 3:
+                        Console.WriteLine("Inserire la nuova media: ");
+                        decimal avg = decimal.Parse(Console.ReadLine());
+                        s.AvgGrades = avg;
 
-                    try
-                    {
-                        using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                        sqlCnn.Open();
-                        using SqlCommand sqlCmd = new("UPDATE Student " +
+                        using (SqlCommand sqlCmd = new("UPDATE Student " +
                                                        "SET AvgGrades = @avg " +
-                                                       "WHERE NameFaculty = @nome", sqlCnn);
-                        sqlCmd.Parameters.AddWithValue("@avg", avg);
-                        sqlCmd.Parameters.AddWithValue("@nome", nome);
-                        sqlCmd.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                    break;
+                                                       "WHERE FullName = @nome", sqlCnn))
+                        {
+                            sqlCmd.Parameters.AddWithValue("@avg", avg);
+                            sqlCmd.Parameters.AddWithValue("@nome", nome);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+
+                        break;
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
         }
+
         public void ViewStudents()
         {
             Console.Clear();
             Console.WriteLine("Elenco Studenti: \n");
             foreach (Student s in studentList)
             {
-                Console.WriteLine($"Nome: {s.FullName}\nData di nascita: {s.DateOfBirth}\nFacoltà: {s.Faculty.NameFaculty}\nRetta annuale: {s.Tuition}\nMedia Esami: {s.AvgGrades}\n");
+                Console.Write($"Nome: {s.FullName}\nData di nascita: {s.DateOfBirth}\nFacoltà: {s.Faculty.NameFaculty}\nRetta annuale: {s.Tuition}\nMedia Esami: {s.AvgGrades}\nCorsi: ");
+                foreach (Course course in s.StudentsCourses)
+                {
+                    Console.WriteLine($"{course.CourseName}");
+                }
+                Console.Write("Esami: ");
+                foreach (Exam exam in s.StudentsExams)
+                {
+                    Console.WriteLine($"Data: {exam.ExamDate}, Corso: {exam.Course.CourseName} ");
+                }
+                Console.WriteLine();
             }
         }
     }
+
 }
 

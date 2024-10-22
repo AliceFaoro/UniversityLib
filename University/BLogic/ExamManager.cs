@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Configuration;
+using System.Security.Cryptography;
 using University.DataModel;
 
 namespace University.BLogic
@@ -33,12 +34,11 @@ namespace University.BLogic
                     });
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
 
-                throw;
+                Console.WriteLine(ex.Message);
             }
-            Console.WriteLine($"{examsList[0].Faculty.NameFaculty}, {examsList[0].Course.CourseName}, {examsList[0].ExamProfessor.FullName} ,{examsList[0].ExamDate}");
 
             return examsList;
         }
@@ -46,8 +46,6 @@ namespace University.BLogic
         {
             try
             {
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-
                 Console.WriteLine("Inserire Id: ");
                 int id = int.Parse(Console.ReadLine());
                 Console.WriteLine("Inserire Id Facoltà");
@@ -59,6 +57,7 @@ namespace University.BLogic
                 Console.WriteLine("Inserire data esame: ");
                 DateTime date = DateTime.Parse(Console.ReadLine());
 
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
                 using SqlCommand sqlCmd = new("INSERT INTO EXAM" +
@@ -81,6 +80,60 @@ namespace University.BLogic
                     ExamDate = date
                 };
                 examsList.Add(e);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        public void UpdateExam()
+        {
+            try
+            {
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
+
+                Console.Clear();
+                Console.WriteLine("Inserire l'id dell'esame da aggiornare: ");
+                int eId = int.Parse(Console.ReadLine());
+                Exam e = examsList.Find(e => e.Id == eId);
+                Console.WriteLine("Cosa vuoi aggiornare? 1.Professore 2.Data");
+                int scelta = int.Parse(Console.ReadLine());
+
+                switch (scelta)
+                {
+                    case 1:
+
+                        Console.WriteLine("Inserire il nome del nuovo professore:");
+                        string pName = Console.ReadLine();
+                        Professor p = ProfessorManager.professorList.Find(p => p.FullName.Equals(pName));
+                        int pId = p.Id;
+                        e.ExamProfessor = p;
+
+                        using (SqlCommand sqlCmd = new("UPDATE Exam SET ProfessorId = @pId WHERE Id = @eId", sqlCnn))
+                        {
+                            sqlCmd.Parameters.AddWithValue("@pId", pId);
+                            sqlCmd.Parameters.AddWithValue("@eId", eId);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+
+                        break;
+                    case 2:
+
+                        Console.WriteLine("Inserire la nuova data ");
+                        DateTime data = DateTime.Parse(Console.ReadLine());
+                        e.ExamDate = data;
+
+                        using (SqlCommand sqlCmd = new("UPDATE Exam SET ExamDate = @data WHERE Id = @eId", sqlCnn))
+                        {
+                            sqlCmd.Parameters.AddWithValue("@data", data);
+                            sqlCmd.Parameters.AddWithValue("@eId", eId);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+
+                        break;
+                }
             }
             catch (Exception ex)
             {
