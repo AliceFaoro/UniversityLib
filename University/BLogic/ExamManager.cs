@@ -6,6 +6,8 @@ namespace University.BLogic
 {
     public class ExamManager
     {
+        ExceptionLogManager exLogManager = new();
+
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
 
@@ -38,6 +40,7 @@ namespace University.BLogic
             {
 
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
             return examsList;
@@ -81,10 +84,12 @@ namespace University.BLogic
                     ExamDate = date
                 };
                 examsList.Add(e);
+                Console.WriteLine("\nEsami aggiungi con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiorna i dati di un esame sia nel database che nella lista
@@ -139,10 +144,12 @@ namespace University.BLogic
 
                         break;
                 }
+                Console.WriteLine("\nEsame aggiornato con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Visualizza a console la lista degli esami

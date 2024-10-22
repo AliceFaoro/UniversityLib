@@ -1,9 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Configuration;
-using System.Data.Common;
-using System.Data.SqlTypes;
-using University.BLogic;
-using University.DataModel;
+﻿using University.BLogic;
 
 namespace University.AppMenu
 {
@@ -18,8 +13,14 @@ namespace University.AppMenu
             CourseManager cManager = new();
             ExamManager eManager = new();
 
-            CreateMenu(fManager, sManager, pManager, cManager, eManager); Console.WriteLine("\n\nPremere 'S' per continuare, qualsiasi altro tasto per uscire.");
+            CreateMenu(fManager, sManager, pManager, cManager, eManager); 
+
+            Console.WriteLine("\n\nPremere 'S' per continuare, qualsiasi altro tasto per uscire.");
+
+            //Legge il tasto schiacciato dall'utente
             var s = Console.ReadKey();
+
+            //Se il tasto corrisponde ad 'S' allora ricrea il menù
             while (s.Key == ConsoleKey.S)
             {
                 Console.Clear();
@@ -27,17 +28,21 @@ namespace University.AppMenu
                 Console.WriteLine("\n\nPremere 'S' per continuare, qualsiasi altro tasto per uscire.");
                 s = Console.ReadKey();
             }
+
+            //Se l'utente preme un qualsisi tasto diverso da 'S' si chiude l'applicazione
             Console.Clear();
-            Console.WriteLine("Hai premuto un tasto diverso da 'S'. Chiusura del programma...");
+            Console.WriteLine("\nHai premuto un tasto diverso da 'S'. Chiusura del programma...");
             Environment.Exit(0);
         }
 
+        //Metodo per creare il menù
         private static void CreateMenu(FacultyManager f, StudentManager sM, ProfessorManager pM, CourseManager cM, ExamManager eM)
         {
+            ExceptionLogManager exLogManager = new();
 
             Console.WriteLine("BENVENUTO!\n");
-            Console.WriteLine("Menù:\n1. Importare Dati dal Database\n2. Aggiungi\n3. Modifica\n4. Cancella\n5. Visualizza elenco");
-            Console.WriteLine("\nEffettua una scelta da 1 a 5: ");
+            Console.WriteLine("Effettua una scelta da 1 a 5:\n\n1. Importa Dati \n2. Aggiungi Dati\n3. Modifica Dati\n4. Cancella Dati\n5. Visualizza Elenco");
+            Console.Write("\nScelta: ");
             int scelta = int.Parse(Console.ReadLine());
             switch (scelta)
             {
@@ -54,19 +59,19 @@ namespace University.AppMenu
                         pM.GetProfessors2();
                         cM.GetCourses2();
 
-
-                        Console.WriteLine("\n\nDati importati con successo!\n");
+                        Console.WriteLine("\nDati importati con successo!\n");
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        Console.WriteLine($"{e.Message}");
+                        Console.WriteLine($"{ex.Message}");
+                        exLogManager.ExcLog(ex);
                     }
-
                     break;
 
                 case 2:
                     Console.WriteLine("Chi desideri aggiungere? 1.Facoltà 2.Studente 3.Professore 4.Corso 5.Esame");
                     int s = int.Parse(Console.ReadLine());
+
                     switch (s)
                     {
                         case 1:
@@ -85,8 +90,8 @@ namespace University.AppMenu
                             eM.AddExam();
                             break;
                     }
-
                     break;
+
                 case 3:
                     Console.WriteLine("Chi desideri modificare? 1.Facoltà 2.Studente 3.Professore 4.Corso 5.Esame");
                     s = int.Parse(Console.ReadLine());
@@ -109,9 +114,11 @@ namespace University.AppMenu
                             break;
                     }
                     break;
+
                 case 4:
-                    
+                    sM.DeleteStudent();
                     break;
+
                 case 5:
                     Console.WriteLine("\nChi desideri visualizzare? 1.Facoltà 2.Studente 3.Professore 4.Corso 5.Esame");
                     s = int.Parse(Console.ReadLine());
@@ -134,11 +141,9 @@ namespace University.AppMenu
                             eM.ViewExam();
                             break;
                     }
-
                     break;
 
             }
-
         }
     }
 }

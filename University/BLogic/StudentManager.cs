@@ -6,6 +6,7 @@ namespace University.BLogic
 {
     public class StudentManager
     {
+        ExceptionLogManager exLogManager = new();
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
 
@@ -38,6 +39,7 @@ namespace University.BLogic
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
             return studentList;
@@ -81,27 +83,29 @@ namespace University.BLogic
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiunge un nuovo studente al database e sulla lista
         public void AddStudent()
         {
-            Console.Clear();
-            Console.WriteLine("Inserire Id studente: ");
-            int id = int.Parse(Console.ReadLine());
-            Console.WriteLine("Inserire Nome completo studente: ");
-            string name = Console.ReadLine();
-            Console.WriteLine("Inserire Data di nascita: ");
-            DateTime date = DateTime.Parse(Console.ReadLine());
-            Console.WriteLine("Inserire Id Facoltà");
-            int fId = int.Parse(Console.ReadLine());
-            Console.WriteLine("Inserire Retta: ");
-            decimal tuition = decimal.Parse(Console.ReadLine());
-            Console.WriteLine("Inserire Media: ");
-            decimal avg = decimal.Parse(Console.ReadLine());
             try
             {
+                Console.Clear();
+                Console.WriteLine("Inserire Id studente: ");
+                int id = int.Parse(Console.ReadLine());
+                Console.WriteLine("Inserire Nome completo studente: ");
+                string name = Console.ReadLine();
+                Console.WriteLine("Inserire Data di nascita: ");
+                DateTime date = DateTime.Parse(Console.ReadLine());
+                Console.WriteLine("Inserire Id Facoltà");
+                int fId = int.Parse(Console.ReadLine());
+                Console.WriteLine("Inserire Retta: ");
+                decimal tuition = decimal.Parse(Console.ReadLine());
+                Console.WriteLine("Inserire Media: ");
+                decimal avg = decimal.Parse(Console.ReadLine());
+
                 _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
@@ -116,22 +120,26 @@ namespace University.BLogic
                 sqlCmd.Parameters.AddWithValue("@tuition", tuition);
                 sqlCmd.Parameters.AddWithValue("@avg", avg);
                 sqlCmd.ExecuteNonQuery();
+                Console.WriteLine("\nStudente aggiunto con successo!\n");
+
+                Student s = new Student
+                {
+                    Id = id,
+                    FullName = name,
+                    DateOfBirth = date,
+                    Faculty = FacultyManager.facultyList.Find(f => f.Id == fId),
+                    Tuition = tuition,
+                    AvgGrades = avg
+                };
+                studentList.Add(s);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
-            Student s = new Student
-            {
-                Id = id,
-                FullName = name,
-                DateOfBirth = date,
-                Faculty = FacultyManager.facultyList.Find(f => f.Id == fId),
-                Tuition = tuition,
-                AvgGrades = avg
-            };
-            studentList.Add(s);
+            
         }
         //Aggiorna studente sul database e nella lista
         public void UpdateStudent()
@@ -205,14 +213,39 @@ namespace University.BLogic
 
                         break;
                 }
+                Console.WriteLine("\nDati aggiornati con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
         }
         //Stampa a console la lista di tutti gli studenti
+        public void DeleteStudent()
+        {
+            
+            try
+            {
+                Console.WriteLine("Inserisci il nome e cognome dello studente da eliminare: ");
+                string nome = Console.ReadLine();
+
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
+                using SqlCommand sqlCmd = new("DElETE FROM Student WHERE FullName = @nome", sqlCnn);
+                sqlCmd.Parameters.AddWithValue("@nome", nome);
+                sqlCmd.ExecuteNonQuery();
+                Console.WriteLine("\nStudente eliminato con successo!\n");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
+            }
+        }
+        //Visuaizza a console la lista degli studenti
         public void ViewStudents()
         {
             Console.Clear();

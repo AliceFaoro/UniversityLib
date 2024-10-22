@@ -6,7 +6,7 @@ namespace University.BLogic
 {
     public class CourseManager
     {
-
+        ExceptionLogManager exLogManager = new();
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
 
@@ -39,6 +39,7 @@ namespace University.BLogic
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
             return coursesList;
@@ -68,7 +69,8 @@ namespace University.BLogic
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Message); 
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiunge un nuovo corso nel database e nella lista
@@ -107,10 +109,12 @@ namespace University.BLogic
                     CourseProfessor = ProfessorManager.professorList.Find(p => p.Id == pId)
                 };
                 coursesList.Add(c);
+                Console.WriteLine("\nCorso aggiunto con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiorna i dati di un corso sia nel database che nella lista
@@ -138,15 +142,16 @@ namespace University.BLogic
                 sqlCmd.Parameters.AddWithValue("@pId", pId);
                 sqlCmd.Parameters.AddWithValue("@nome", nome);
                 sqlCmd.ExecuteNonQuery();
+                Console.WriteLine("\nCorso aggiornato con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
         }
         //Visualizza a console la lista dei corsi
-
         public void ViewCourse()
         {
             Console.Clear();

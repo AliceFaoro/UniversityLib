@@ -7,6 +7,8 @@ namespace University.BLogic
 {
     public class FacultyManager
     {
+        ExceptionLogManager exLogManager = new();
+
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
         
@@ -36,10 +38,10 @@ namespace University.BLogic
 
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 Console.WriteLine("Errore");
-                throw;
+                exLogManager.ExcLog(ex);
             }
             return facultyList;
         }
@@ -98,7 +100,8 @@ namespace University.BLogic
 
             catch(Exception ex)
             {
-                Console.WriteLine(ex.Message);  
+                Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiunge una nuova facoltà nel database e nella lista
@@ -129,10 +132,12 @@ namespace University.BLogic
                     NameFaculty = name
                 };
                 facultyList.Add(f);
+                Console.WriteLine("\nFacoltà aggiunta con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
         }
@@ -140,14 +145,16 @@ namespace University.BLogic
         public void UpdateFaculty()
         {
             Console.Clear();
-            Console.WriteLine("Inserire il nome della facoltà da aggiornare: ");
-            string nome = Console.ReadLine();
-            Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(nome));
-            Console.WriteLine("Inserire il nuovo nome:");
-            string newName = Console.ReadLine();
-            f.NameFaculty = newName;
+           
             try
             {
+                Console.WriteLine("Inserire il nome della facoltà da aggiornare: ");
+                string nome = Console.ReadLine();
+                Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(nome));
+                Console.WriteLine("Inserire il nuovo nome:");
+                string newName = Console.ReadLine();
+                f.NameFaculty = newName;
+
                 _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
                 using SqlConnection sqlCnn = new(_connection.ConnectionString);
                 sqlCnn.Open();
@@ -157,10 +164,12 @@ namespace University.BLogic
                 sqlCmd.Parameters.AddWithValue("@newName", newName);
                 sqlCmd.Parameters.AddWithValue("@nome", nome);
                 sqlCmd.ExecuteNonQuery();
+                Console.WriteLine("Facoltà aggiornata con successo!");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
 
         }

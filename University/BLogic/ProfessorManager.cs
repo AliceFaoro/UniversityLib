@@ -6,6 +6,8 @@ namespace University.BLogic
 {
     public class ProfessorManager
     {
+        ExceptionLogManager exLogManager = new();
+
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
 
@@ -37,6 +39,7 @@ namespace University.BLogic
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
             return professorList;
         }
@@ -68,6 +71,7 @@ namespace University.BLogic
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Aggiungo professore nel database e nella lista
@@ -110,73 +114,86 @@ namespace University.BLogic
                     Pay = pay
                 };
                 professorList.Add(p);
+                Console.WriteLine("\nProfessore aggiunto con successo!");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Modifico un professore sia nel database che nella lista
         public void UpdateProfessor()
         {
-            _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-            using SqlConnection sqlCnn = new(_connection.ConnectionString);
-            sqlCnn.Open();
-
-            Console.Clear();
-            Console.WriteLine("Inserire il nome del professore da aggiornare: ");
-            string nome = Console.ReadLine();
-            Professor p = professorList.Find(p => p.FullName.Equals(nome));
-            Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Stipendio");
-            int scelta = int.Parse(Console.ReadLine());
-
-            switch (scelta)
+            try
             {
-                case 1:
+                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+                using SqlConnection sqlCnn = new(_connection.ConnectionString);
+                sqlCnn.Open();
 
-                    Console.WriteLine("Inserire il nome della nuova facoltà:");
-                    string fName = Console.ReadLine();
-                    Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
-                    p.Faculty = f;
-                    int fId = f.Id;
+                Console.Clear();
+                Console.WriteLine("Inserire il nome del professore da aggiornare: ");
+                string nome = Console.ReadLine();
+                Professor p = professorList.Find(p => p.FullName.Equals(nome));
+                Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Stipendio");
+                int scelta = int.Parse(Console.ReadLine());
 
-                    try
-                    {
-                        using SqlCommand sqlCmd = new("UPDATE Professor " +
-                                                       "SET FacultyId = @fId " +
-                                                       "WHERE FullName = @nome", sqlCnn);
-                        sqlCmd.Parameters.AddWithValue("@fId", fId);
-                        sqlCmd.Parameters.AddWithValue("@nome", nome);
-                        sqlCmd.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                switch (scelta)
+                {
+                    case 1:
 
-                    break;
-                case 2:
+                        Console.WriteLine("Inserire il nome della nuova facoltà:");
+                        string fName = Console.ReadLine();
+                        Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
+                        p.Faculty = f;
+                        int fId = f.Id;
 
-                    Console.WriteLine("Inserire il nuovo stipendio ");
-                    decimal pay = decimal.Parse(Console.ReadLine());
-                    p.Pay = pay;
+                        try
+                        {
+                            using SqlCommand sqlCmd = new("UPDATE Professor " +
+                                                           "SET FacultyId = @fId " +
+                                                           "WHERE FullName = @nome", sqlCnn);
+                            sqlCmd.Parameters.AddWithValue("@fId", fId);
+                            sqlCmd.Parameters.AddWithValue("@nome", nome);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            exLogManager.ExcLog(ex);
+                        }
 
-                    try
-                    {
-                        using SqlCommand sqlCmd = new("UPDATE Professor " +
-                                                       "SET Pay = @pay " +
-                                                       "WHERE FullName = @nome", sqlCnn);
-                        sqlCmd.Parameters.AddWithValue("@pay", pay);
-                        sqlCmd.Parameters.AddWithValue("@nome", nome);
-                        sqlCmd.ExecuteNonQuery();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                        break;
+                    case 2:
 
-                    break;
+                        Console.WriteLine("Inserire il nuovo stipendio ");
+                        decimal pay = decimal.Parse(Console.ReadLine());
+                        p.Pay = pay;
 
+                        try
+                        {
+                            using SqlCommand sqlCmd = new("UPDATE Professor " +
+                                                           "SET Pay = @pay " +
+                                                           "WHERE FullName = @nome", sqlCnn);
+                            sqlCmd.Parameters.AddWithValue("@pay", pay);
+                            sqlCmd.Parameters.AddWithValue("@nome", nome);
+                            sqlCmd.ExecuteNonQuery();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            exLogManager.ExcLog(ex);
+                        }
+
+                        break;
+
+                }
+                Console.WriteLine("\nProfessore aggiornato con successo!\n");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex);
             }
         }
         //Visualizza a console la lista di tutti i professori presenti nella lista
