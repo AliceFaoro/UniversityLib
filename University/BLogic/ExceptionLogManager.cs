@@ -1,34 +1,29 @@
 ﻿using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace University.BLogic
 {
+    //This class saves in a database's table all the exceptions
     public class ExceptionLogManager
     {
         private readonly SqlConnection _connection = new();
         private SqlCommand _command = new();
 
-        public void ExcLog(Exception ex)
+        public void ExcLog(Exception ex, string connectionString)
         {
             DateTime date = DateTime.Now;
             string message = ex.Message;
 
-            _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-            using SqlConnection sqlCnn = new(_connection.ConnectionString);
-            sqlCnn.Open();
-            using SqlCommand sqlCmd = new("INSERT INTO ExceptionLog" +
-                                           "(Date, Message) " +
-                                           "VALUES " +
-                                           "(@date, @message)", sqlCnn);
-            sqlCmd.Parameters.AddWithValue("@date", date);
-            sqlCmd.Parameters.AddWithValue("@message", message);
-            sqlCmd.ExecuteNonQuery();
+            using (var sqlCnn = new SqlConnection(connectionString))
+            {
+                sqlCnn.Open();
+                using SqlCommand sqlCmd = new("INSERT INTO ExceptionLog" +
+                                               "(Date, Message) " +
+                                               "VALUES " +
+                                               "(@date, @message)", sqlCnn);
+                sqlCmd.Parameters.AddWithValue("@date", date);
+                sqlCmd.Parameters.AddWithValue("@message", message);
+                sqlCmd.ExecuteNonQuery();
+            }
         }
 
     }

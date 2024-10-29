@@ -1,5 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
-using System.Configuration;
+using System.Data;
 using University.DataModel;
 
 namespace University.BLogic
@@ -12,204 +12,171 @@ namespace University.BLogic
         private SqlCommand _command = new();
 
         public static List<Professor> professorList = new();
-        //Importa dati iniziali dal database
-        public List<Professor> GetProfessors()
+
+        //This method returns a string with all the Professors in the database
+        public string GetProfessors(string connectionString)
         {
             try
             {
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-                using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                sqlCnn.Open();
-                using SqlCommand sqlCmd = new("SELECT * FROM PROFESSOR", sqlCnn);
-                using SqlDataReader dataReader = sqlCmd.ExecuteReader();
-
-                //Per ogni professore presente nel database creo un oggetto professore e lo aggiungo alla lista
-                while (dataReader.Read())
+                using (var sqlCnn = new SqlConnection(connectionString))
                 {
-                    professorList.Add(new Professor
+                    sqlCnn.Open();
+                    using SqlCommand sqlCmd = new("GetProfessors", sqlCnn)
                     {
-                        Id = int.Parse(dataReader["Id"].ToString()),
-                        FullName = dataReader["FullName"].ToString().Trim(),
-                        DateOfBirth = DateTime.Parse(dataReader["DateOfBirth"].ToString()),
-                        Faculty = FacultyManager.facultyList.Find(f => f.Id == (int.Parse(dataReader["FacultyId"].ToString()))),
-                        Pay = decimal.Parse(dataReader["Pay"].ToString())
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                exLogManager.ExcLog(ex);
-            }
-            return professorList;
-        }
-        //Importa dati mancanti dal database
-        public void GetProfessors2()
-        {
-            try
-            {
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-                using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                sqlCnn.Open();
-
-                //Aggiungo la lista dei corsi tenuti da ogni professore
-                //Dalla tabella nel database Course selezioni tutti i corsi che hanno il ProfessorId uguale all'id del professore nella lista 
-                foreach (Professor prof in professorList)
-                {
-                    int id = prof.Id;
-                    using SqlCommand sqlCmd = new("SELECT Id FROM Course WHERE ProfessorId = @id", sqlCnn);
-                    sqlCmd.Parameters.AddWithValue("@id", id);
+                        CommandType = CommandType.StoredProcedure
+                    };
                     using SqlDataReader dataReader = sqlCmd.ExecuteReader();
+
+                    //Per ogni professore presente nel database creo un oggetto professore e lo aggiungo alla lista
                     while (dataReader.Read())
                     {
-                        Course c = CourseManager.coursesList.Find(c => c.Id == int.Parse(dataReader["Id"].ToString()));
-                        prof.ProfessorsCourses.Add(c);
+                        int id = int.Parse(dataReader["Id"].ToString());
+                        if (professorList.Find(p => p.Id == id) == null)
+                        {
+
+                            Professor p = new Professor
+                            {
+                                Id = int.Parse(dataReader["Id"].ToString()),
+                                FullName = dataReader["FullName"].ToString().Trim(),
+                                DateOfBirth = DateTime.Parse(dataReader["DateOfBirth"].ToString()),
+                                Pay = decimal.Parse(dataReader["Pay"].ToString())
+                            };
+
+                            p.Faculty = new Faculty
+                            {
+                                Id = int.Parse(dataReader["fId"].ToString()),
+                                NameFaculty = dataReader["NameFaculty"].ToString()
+                            };
+
+                            p.ProfessorsCourses.Add(new Course
+                            {
+                                Id = int.Parse(dataReader["cId"].ToString()),
+                                CourseName = dataReader["CourseName"].ToString(),
+                                Faculty = p.Faculty
+                            });
+
+                            professorList.Add(p);
+                        }
+                        else
+                        {
+                            Professor p1 = professorList.Find(p => p.Id == id);
+                            int courseId = int.Parse(dataReader["cId"].ToString());
+                            if (p1.ProfessorsCourses.Find(c => c.Id == courseId) == null)
+                            {
+                                p1.ProfessorsCourses.Add(new Course
+                                {
+                                    Id = int.Parse(dataReader["Id"].ToString()),
+                                    CourseName = dataReader["CourseName"].ToString(),
+                                    Faculty = new Faculty
+                                    {
+                                        Id = int.Parse(dataReader["fId"].ToString()),
+                                        NameFaculty = dataReader["NameFaculty"].ToString()
+                                    }
+                                });
+                            }
+                        }
                     }
-
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                exLogManager.ExcLog(ex);
+                exLogManager.ExcLog(ex, connectionString);
             }
+
+            string testo = "Elenco Professori: \n";
+
+            foreach (Professor p in professorList)
+            {
+                testo += $"Nome: {p.FullName}\nData di nascita: {p.DateOfBirth}\nFacoltà: {p.Faculty.NameFaculty}\nStipendio: {p.Pay}\n";
+                foreach (Course c in p.ProfessorsCourses)
+                {
+                    testo += $"Corso: {c.CourseName}\n\n";
+                }
+            }
+            return testo;
+
         }
-        //Aggiungo professore nel database e nella lista
-        public void AddProfessor()
+
+        //This methods Adds a new Professor in the database
+        public void AddProfessor(string connectionString, int id, string name, DateTime date, int fId, decimal pay)
         {
-            Console.Clear();
             try
             {
-                Console.WriteLine("Inserire Id: ");
-                int id = int.Parse(Console.ReadLine());
-                Console.WriteLine("Inserire Nome completo: ");
-                string name = Console.ReadLine();
-                Console.WriteLine("Inserire Data di nascita: ");
-                DateTime date = DateTime.Parse(Console.ReadLine());
-                Console.WriteLine("Inserire Id Facoltà");
-                int fId = int.Parse(Console.ReadLine());
-                Console.WriteLine("Inserire Stipendio: ");
-                decimal pay = decimal.Parse(Console.ReadLine());
-
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-                using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                sqlCnn.Open();
-                using SqlCommand sqlCmd = new("INSERT INTO PROFESSOR" +
-                                           "(Id,FullName, DateOfBirth, FacultyId, Pay) " +
-                                           "VALUES " +
-                                           "(@id, @name, @date, @fId, @pay)", sqlCnn);
-                sqlCmd.Parameters.AddWithValue("@id", id);
-                sqlCmd.Parameters.AddWithValue("@name", name);
-                sqlCmd.Parameters.AddWithValue("@date", date);
-                sqlCmd.Parameters.AddWithValue("@fId", fId);
-                sqlCmd.Parameters.AddWithValue("@pay", pay);
-                sqlCmd.ExecuteNonQuery();
-
-                Professor p = new Professor
+                using (var sqlCnn = new SqlConnection(connectionString))
                 {
-                    Id = id,
-                    FullName = name,
-                    DateOfBirth = date,
-                    Faculty = FacultyManager.facultyList.Find(f => f.Id == fId),
-                    Pay = pay
-                };
-                professorList.Add(p);
-                Console.WriteLine("\nProfessore aggiunto con successo!");
+                    sqlCnn.Open();
+                    using SqlCommand sqlCmd = new("INSERT INTO PROFESSOR" +
+                                               "(Id,FullName, DateOfBirth, FacultyId, Pay) " +
+                                               "VALUES " +
+                                               "(@id, @name, @date, @fId, @pay)", sqlCnn);
+                    sqlCmd.Parameters.AddWithValue("@id", id);
+                    sqlCmd.Parameters.AddWithValue("@name", name);
+                    sqlCmd.Parameters.AddWithValue("@date", date);
+                    sqlCmd.Parameters.AddWithValue("@fId", fId);
+                    sqlCmd.Parameters.AddWithValue("@pay", pay);
+                    sqlCmd.ExecuteNonQuery();
+
+                    Console.WriteLine("\nProfessore aggiunto con successo!");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                exLogManager.ExcLog(ex);
+                exLogManager.ExcLog(ex, connectionString);
             }
         }
-        //Modifico un professore sia nel database che nella lista
-        public void UpdateProfessor()
+
+        //This method Updates the Faculty and the Pay of a Professor
+        public void UpdateProfessor(string connectionString, string nome, int fId, decimal pay)
         {
             try
             {
-                _connection.ConnectionString = ConfigurationManager.AppSettings["DbConnectionString"];
-                using SqlConnection sqlCnn = new(_connection.ConnectionString);
-                sqlCnn.Open();
-
-                Console.Clear();
-                Console.WriteLine("Inserire il nome del professore da aggiornare: ");
-                string nome = Console.ReadLine();
-                Professor p = professorList.Find(p => p.FullName.Equals(nome));
-                Console.WriteLine("Cosa vuoi aggiornare? 1.Facoltà 2.Stipendio");
-                int scelta = int.Parse(Console.ReadLine());
-
-                switch (scelta)
+                using (var sqlCnn = new SqlConnection(connectionString))
                 {
-                    case 1:
+                    sqlCnn.Open();
 
-                        Console.WriteLine("Inserire il nome della nuova facoltà:");
-                        string fName = Console.ReadLine();
-                        Faculty f = FacultyManager.facultyList.Find(f => f.NameFaculty.Equals(fName));
-                        p.Faculty = f;
-                        int fId = f.Id;
-
-                        try
-                        {
-                            using SqlCommand sqlCmd = new("UPDATE Professor " +
-                                                           "SET FacultyId = @fId " +
-                                                           "WHERE FullName = @nome", sqlCnn);
-                            sqlCmd.Parameters.AddWithValue("@fId", fId);
-                            sqlCmd.Parameters.AddWithValue("@nome", nome);
-                            sqlCmd.ExecuteNonQuery();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                            exLogManager.ExcLog(ex);
-                        }
-
-                        break;
-                    case 2:
-
-                        Console.WriteLine("Inserire il nuovo stipendio ");
-                        decimal pay = decimal.Parse(Console.ReadLine());
-                        p.Pay = pay;
-
-                        try
-                        {
-                            using SqlCommand sqlCmd = new("UPDATE Professor " +
-                                                           "SET Pay = @pay " +
-                                                           "WHERE FullName = @nome", sqlCnn);
-                            sqlCmd.Parameters.AddWithValue("@pay", pay);
-                            sqlCmd.Parameters.AddWithValue("@nome", nome);
-                            sqlCmd.ExecuteNonQuery();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                            exLogManager.ExcLog(ex);
-                        }
-
-                        break;
-
+                    using SqlCommand sqlCmd = new("UPDATE Professor " +
+                                                  "SET FacultyId = @fId, Pay = @pay " +
+                                                  "WHERE FullName = @nome", sqlCnn);
+                    sqlCmd.Parameters.AddWithValue("@fId", fId);
+                    sqlCmd.Parameters.AddWithValue("@pay", pay);
+                    sqlCmd.Parameters.AddWithValue("@nome", nome);
+                    sqlCmd.ExecuteNonQuery();
                 }
+
                 Console.WriteLine("\nProfessore aggiornato con successo!\n");
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                exLogManager.ExcLog(ex);
+                exLogManager.ExcLog(ex, connectionString);
             }
         }
-        //Visualizza a console la lista di tutti i professori presenti nella lista
-        public void ViewProfessor()
-        {
-            Console.Clear();
-            Console.WriteLine("Elenco Professori: \n");
-            foreach (Professor p in professorList)
-            {
-                Console.WriteLine($"Nome: {p.FullName}\nData di nascita: {p.DateOfBirth}\nFacoltà: {p.Faculty.NameFaculty}\nStipendio: {p.Pay}");
-                foreach (Course c in p.ProfessorsCourses)
-                {
-                    Console.Write($"Corso: {c.CourseName}\n\n");
-                }
-            }
 
+        //This method Deletes a Professor
+        public void DeleteProfessor(string connectionString, int pId)
+        {
+            try
+            {
+                using (var sqlCnn = new SqlConnection(connectionString))
+                {
+                    sqlCnn.Open();
+
+                    using SqlCommand sqlCmd = new("DELETE Professor " +
+                                                  "WHERE Id = @pId", sqlCnn);
+                    sqlCmd.Parameters.AddWithValue("@pId", pId);
+                    sqlCmd.ExecuteNonQuery();
+                }
+
+                Console.WriteLine("\nProfessore eliminato con successo!\n");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                exLogManager.ExcLog(ex, connectionString);
+            }
         }
+
     }
 }

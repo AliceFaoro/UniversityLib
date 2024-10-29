@@ -9,8 +9,8 @@ namespace University.DataModel
         public int Id { get; set; }
         [Required]
         public Faculty Faculty { get; set; }
+        public Professor Professor { get; set; }
         public Course Course { get; set; }
-        public Professor ExamProfessor { get; set; }
         public DateTime ExamDate { get; set; }
 
 
