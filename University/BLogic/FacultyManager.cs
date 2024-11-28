@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Text.Json;
 using University.DataModel;
 
 
@@ -64,6 +65,7 @@ namespace University.BLogic
                             });
 
                             facultyList.Add(f);
+
                         }
                         else
                         {
